@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Vibrator;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
@@ -37,6 +38,8 @@ public class Clock extends AppCompatActivity {
     private static final String TAG = "Clock";
     public static Context mContext;
     private static final int time = 900000;
+    TextView locUp;
+    TextView locDown;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
