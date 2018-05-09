@@ -31,15 +31,9 @@ import java.util.TimerTask;
 public class Clock extends AppCompatActivity {
 
     TextView Clock;
-    int isDark = 0;
     Timer timer = new Timer();
-    int impulseTimes = 0;
-    int killedImpulse = 0;
-    private static final String TAG = "Clock";
     public static Context mContext;
     private static final int time = 900000;
-    TextView locUp;
-    TextView locDown;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,17 +47,10 @@ public class Clock extends AppCompatActivity {
         Clock.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isDark == 0) {
-                    changeAppBrightness(255);
-                    isDark = 1;
-                }
-                else if (isDark == 1){
-                    changeAppBrightness(127);
-                    isDark = 2;
-                }else {
-                    changeAppBrightness(0);
-                    isDark = 0;
-                }
+                float brightness = getAppBrightness();
+                if (brightness >= 0.7) changeAppBrightness(127);
+                else if (brightness < 0.7 & brightness >= 0.3) changeAppBrightness(0);
+                else changeAppBrightness(255);
             }
         });
         Clock.setOnLongClickListener(new View.OnLongClickListener() {
@@ -73,48 +60,7 @@ public class Clock extends AppCompatActivity {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        impulseTimes++;
-                        timer.schedule(new TimerTask() {
-                            @Override
-                            public void run() {
-                                runOnUiThread(new Runnable() {      // UI thread
-                                    @Override
-                                    public void run() {
-                                        Vibrator vibrator = (Vibrator) Clock.this.getSystemService(Clock.this.VIBRATOR_SERVICE);
-                                        vibrator.vibrate(1000);
-                                        AlertDialog.Builder dialog = new AlertDialog.Builder(Clock.this);
-                                        dialog.setTitle("提示");
-                                        dialog.setMessage("还想做吗?");
-                                        dialog.setCancelable(false);
-                                        dialog.setPositiveButton("想", new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                impulse impulse = new impulse();
-                                                SimpleDateFormat df = new SimpleDateFormat("yyyy年MM月dd日");
-                                                Date nowDate = new Date(System.currentTimeMillis());
-                                                impulse.setTime(df.format(nowDate));
-                                                impulse.setSolved("false");
-                                                impulse.save();
-                                            }
-                                        });
-                                        dialog.setNegativeButton("不想", new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                killedImpulse++;
-                                                impulse impulse = new impulse();
-                                                SimpleDateFormat df = new SimpleDateFormat("yyyy年MM月dd日");
-                                                Date nowDate = new Date(System.currentTimeMillis());
-                                                impulse.setTime(df.format(nowDate));
-                                                impulse.setSolved("true");
-                                                impulse.save();
-                                            }
-                                        });
-                                        dialog.show();
-                                    }
-                                });
-                            }
-                        }, time);
-                        Log.w(TAG, "run: " + impulseTimes);
+                        createNewClock();
                     }
                 }).start();
                 return true;
@@ -132,6 +78,48 @@ public class Clock extends AppCompatActivity {
         }
     };
 
+    private void createNewClock(){
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {      // UI thread
+                    @Override
+                    public void run() {
+                        Vibrator vibrator = (Vibrator) Clock.this.getSystemService(Clock.this.VIBRATOR_SERVICE);
+                        vibrator.vibrate(1000);
+                        AlertDialog.Builder dialog = new AlertDialog.Builder(Clock.this);
+                        dialog.setTitle("提示");
+                        dialog.setMessage("还想做吗?");
+                        dialog.setCancelable(false);
+                        dialog.setPositiveButton("想", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                impulse impulse = new impulse();
+                                SimpleDateFormat df = new SimpleDateFormat("yyyy年MM月dd日");
+                                Date nowDate = new Date(System.currentTimeMillis());
+                                impulse.setTime(df.format(nowDate));
+                                impulse.setSolved("false");
+                                impulse.save();
+                            }
+                        });
+                        dialog.setNegativeButton("不想", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                impulse impulse = new impulse();
+                                SimpleDateFormat df = new SimpleDateFormat("yyyy年MM月dd日");
+                                Date nowDate = new Date(System.currentTimeMillis());
+                                impulse.setTime(df.format(nowDate));
+                                impulse.setSolved("true");
+                                impulse.save();
+                            }
+                        });
+                        dialog.show();
+                    }
+                });
+            }
+        }, time);
+    }
+
     @Override
     protected void onDestroy() {
         unregisterReceiver(mTimeRefreshReceiver);
@@ -139,7 +127,7 @@ public class Clock extends AppCompatActivity {
     }
 
     //核对日期
-    public static boolean verifyDate(String endDate){
+    private boolean verifyDate(String endDate){
         SimpleDateFormat df = new SimpleDateFormat("yyyy年MM月dd日");
         Date nowDate = new Date(System.currentTimeMillis());
         Date endTimeDate = null;
@@ -189,6 +177,12 @@ public class Clock extends AppCompatActivity {
          }
          window.setAttributes(lp);
      }
+
+    private float getAppBrightness() {
+        Window window = this.getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+        return lp.screenBrightness;
+    }
 
     @Override
     public void onBackPressed() {
